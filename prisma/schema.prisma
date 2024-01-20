@@ -1,0 +1,687 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+//**Models de Usuário e Autenticação**
+model Usuario {
+  id                    String            @id @default(uuid())
+  nome                  String
+  email                 String            @unique
+  telefone              String?
+  avatar                String?
+  funcao                FuncaoUsuario     @default(Analista)
+  senha_hash            String
+  criado_em             DateTime          @default(now())
+  token_atualizacao     TokenAtualizacao?
+  relatorios_criados    Relatorio[]       @relation("Criador_Relatorio")
+  relatorios_permitidos Relatorio[]       @relation("Usuarios_Permitidos_Para_Relatorio")
+
+  @@map("usuarios")
+}
+
+model TokenAtualizacao {
+  id         String   @id @default(uuid())
+  expira_em  Int
+  usuario_id String   @unique
+  usuario    Usuario  @relation(fields: [usuario_id], references: [id])
+  criado_em  DateTime @default(now())
+
+  @@map("tokens_atualizacao")
+}
+
+enum FuncaoUsuario {
+  Admin
+  Analista
+  Supervisor
+  Revisor
+}
+
+//**Models de Relatório**
+model Relatorio {
+  id                             String            @id @default(uuid())
+  numero_processo                String            @unique
+  natureza_sinistro              Natureza_Sinistro
+  cliente                        String
+  cnpj                           String
+  data_entrada                   DateTime          @default(now())
+  data_emissao                   DateTime?
+  status                         Status_Relatorio  @default(Formalizando)
+  status_recuperacao_carga       String?
+  fato_gerador_recuperacao_carga String?
+  usuario_responsavel            Usuario           @relation("Criador_Relatorio", fields: [usuario_responsavel_id], references: [id], onDelete: Cascade)
+  usuario_responsavel_id         String
+  usuarios_permitidos            Usuario[]         @relation("Usuarios_Permitidos_Para_Relatorio")
+
+  formularios_selecionados Tipo_Formulario[]
+  formularios              FormulariosDoRelatorio?
+
+  @@map("relatorios")
+}
+
+enum Status_Relatorio {
+  Formalizando
+  Finalizado
+  Aprovado
+  Rejeitado
+  Emitido
+  Recuperado
+  Irreversivel
+}
+
+enum Natureza_Sinistro {
+  Roubo
+  Furto
+  Apreensao
+  Outros
+}
+
+//**Models de Etapa**
+enum Tipo_Formulario {
+  form1_Cliente_Segurado
+  form2_Caracteristica_Sinistro
+  form3_Cronologia_Sinistro
+  form4_Do_Carregamento
+  form5_Motorista
+  form6_Ajudantes
+  form7_Veiculo_Transportador
+  form8_Orgao_Policial
+  form9_Gerenciamento_Risco_Veiculo
+  form10_Sistemas_Protecao_Carregamento
+  form11_Declaracao_Motorista_Ajudante
+  form12_Gerenciamento_Risco_Deposito
+  form13_Locais_Evento
+  form14_Resumo_Averiguacoes
+  form15_Recuperacao_Carga
+  form16_Anexos_Fotograficos
+  form17_Conclusao
+}
+
+enum Status_Formulario {
+  Pendente
+  Formalizando
+  Finalizado
+  Aprovado
+  Corrigir
+  Rejeitado
+}
+
+model FormulariosDoRelatorio {
+  id              String     @id @default(uuid())
+  numero_processo String?    @unique
+  relatorio       Relatorio? @relation(fields: [relatorio_id], references: [id], onDelete: Cascade)
+  relatorio_id    String     @unique
+
+  form1_Cliente_Segurado                Form1ClienteSegurado?
+  form2_Caracteristica_Sinistro         Form2CaracteristicaSinistro?
+  form3_Cronologia_Sinistro             Form3CronologiaSinistro?
+  form4_Do_Carregamento                 Form4DoCarregamento?
+  form5_Motorista                       Form5Motorista?
+  form6_Ajudantes                       Form6Ajudantes?
+  form7_Veiculo_Transportador           Form7VeiculoTransportador?
+  form8_Orgao_Policial                  Form8OrgaoPolicial?
+  form9_Gerenciamento_Risco_Veiculo     Form9GerenciamentoRiscoVeiculo?
+  form10_Sistemas_Protecao_Carregamento Form10SistemasProtecaoCarregamento?
+  form11_Declaracao_Motorista_Ajudante  Form11DeclaracaoMotoristaAjudante?
+  form12_Gerenciamento_Risco_Deposito   Form12GerenciamentoRiscoDeposito?
+  form13_Locais_Evento                  Form13LocaisEvento?
+  form14_Resumo_Averiguacoes            Form14ResumoAveriguacoes?
+  form15_Recuperacao_Carga              Form15RecuperacaoCarga?
+  form16_Anexos_Fotograficos            Form16AnexosFotograficos?
+  form17_Conclusao                      Form17Conclusao?
+
+  @@map("formularios_do_relatorio")
+}
+
+model Form1ClienteSegurado {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+  nome_cliente    String
+  cnpj            String
+  telefone        String?
+  celular         String?
+  email           String?
+  representante   String?
+  cep             String?
+  endereco        String?
+  numero          String?
+  complemento     String?
+  bairro          String?
+  cidade          String?
+  uf              String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String                  @unique
+
+  @@map("form1_Cliente_Segurado")
+}
+
+model Form2CaracteristicaSinistro {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  nome_seguradora   String?
+  natureza_sinistro Natureza_Sinistro
+  carga_embarcada   String?
+  valor_carga       String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form2_Caracteristica_Sinistro")
+}
+
+model Form3CronologiaSinistro {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  cep_local_sinistro         String?
+  endereco_local_sinistro    String?
+  numero_local_sinistro      String?
+  complemento_local_sinistro String?
+  bairro_local_sinistro      String?
+  cidade_local_sinistro      String?
+  uf_local_sinistro          String?
+  comunicante                String?
+  data_hora_sinistro         String?
+  data_hora_comunicacao      String?
+  agente_pamcary             String?
+  data_hora_chegada_local    String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form3_Cronologia_Sinistro")
+}
+
+model Form4DoCarregamento {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  transportadora      String?
+  valor_embarcado     String?
+  remetente           String?
+  cep_origem          String?
+  endereco_origem     String?
+  numero_origem       String?
+  cidade_origem       String?
+  bairro_origem       String?
+  uf_origem           String?
+  complemento_origem  String?
+  destinatario        String?
+  cep_destino         String?
+  endereco_destino    String?
+  numero_destino      String?
+  cidade_destino      String?
+  bairro_destino      String?
+  uf_destino          String?
+  complemento_destino String?
+  numero_crtc_dacte   String?
+  numero_nota_fiscal  String?
+  manifesto           String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form4_Do_Carregamento")
+}
+
+model Form5Motorista {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  nome_motorista                      String?
+  cpf_motorista                       String?
+  data_nascimento_motorista           DateTime?
+  local_nascimento_motorista          String?
+  cnh_motorista                       String?
+  tipo_cnh_motorista                  String?
+  validade_cnh_motorista              String?
+  cep_motorista                       String?
+  endereco_motorista                  String?
+  numero_motorista                    String?
+  complemento_motorista               String?
+  bairro_motorista                    String?
+  cidade_motorista                    String?
+  uf_motorista                        String?
+  telefone_motorista                  String?
+  celular_motorista                   String?
+  email_motorista                     String?
+  vinculo_motorista_empresa           String?
+  consulta_telerisco_motorista        String?
+  numero_consulta_telerisco_motorista String?
+  data_consulta_telerisco_motorista   String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form5_Motorista")
+}
+
+model Form6Ajudantes {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  nome_ajudante             String?
+  cpf_ajudante              String?
+  data_nascimento_ajudante  DateTime?
+  local_nascimento_ajudante String?
+  cnh_ajudante              String?
+  tipo_cnh_ajudante         String?
+  validade_cnh_ajudante     String?
+  cep_ajudante              String?
+  endereco_ajudante         String?
+  numero_ajudante           String?
+  complemento_ajudante      String?
+  bairro_ajudante           String?
+  cidade_ajudante           String?
+  uf_ajudante               String?
+  telefone_ajudante         String?
+  celular_ajudante          String?
+  email_ajudante            String?
+  vinculo_ajudante_empresa  String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form6_Ajudantes")
+}
+
+model Form7VeiculoTransportador {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  //Cavalo Mecânico
+  placa_cavalo_mecanico                 String?
+  renavam_cavalo_mecanico               String?
+  chassi_cavalo_mecanico                String?
+  marca_cavalo_mecanico                 String?
+  modelo_cavalo_mecanico                String?
+  ano_fabricacao_cavalo_mecanico        String?
+  ano_modelo_cavalo_mecanico            String?
+  cor_cavalo_mecanico                   String?
+  proprietario_cavalo_mecanico          String?
+  cpf_cnpj_proprietario_cavalo_mecanico String?
+  uf_cavalo_mecanico                    String?
+
+  //Carreta
+  placa_carreta                 String?
+  renavam_carreta               String?
+  chassi_carreta                String?
+  marca_carreta                 String?
+  modelo_carreta                String?
+  ano_fabricacao_carreta        String?
+  ano_modelo_carreta            String?
+  cor_carreta                   String?
+  proprietario_carreta          String?
+  cpf_cnpj_proprietario_carreta String?
+  uf_carreta                    String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form7_Veiculo_Transportador")
+}
+
+model Form8OrgaoPolicial {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  delegacia          String?
+  endereco_delegacia String?
+  numero_delegacia   String?
+  bairro_delegacia   String?
+  cidade_delegacia   String?
+  uf_delegacia       String?
+  cep_delegacia      String?
+  telefone_delegacia String?
+  numero_bo          String?
+  data_bo            String?
+  numero_ip          String?
+  data_ip            String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form8_Orgao_Policial")
+}
+
+model Form9GerenciamentoRiscoVeiculo {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  //Rastreamento
+  rastreador_sistema_rastreamento String?
+  rastreador_marca                String?
+  rastreador_modelo               String?
+  rastreador_tipo                 String?
+  rastreador_posicionamento       String?
+
+  //Segunda tecnologia de Rastreamento
+  segunda_tecnologia_rastreamento   String?
+  segunda_tecnologia_marca          String?
+  segunda_tecnologia_modelo         String?
+  segunda_tecnologia_tipo           String?
+  segunda_tecnologia_posicionamento String?
+
+  //Outros Sistemas de Rastreamento
+  outros_sistemas_rastreamento   String?
+  outros_sistemas_marca          String?
+  outros_sistemas_modelo         String?
+  outros_sistemas_tipo           String?
+  outros_sistemas_posicionamento String?
+
+  //Tipo de Sensores e Atuadores
+  sensor_bloqueio_combustivel Boolean? @default(false)
+  sensor_bloqueio_ignicao     Boolean? @default(false)
+  sensor_trava_5Roda          Boolean? @default(false)
+  sensor_trava_portas_bau     Boolean? @default(false)
+  sensor_porta_cabine         Boolean? @default(false)
+  sensor_porta_bau            Boolean? @default(false)
+  sensor_isca                 Boolean? @default(false)
+  sensor_sonoros_visuais      Boolean? @default(false)
+  sensor_botao_panico         Boolean? @default(false)
+  sensor_teclado              Boolean? @default(false)
+  sensor_desengate_carreta    Boolean? @default(false)
+  sensor_outros               Boolean? @default(false)
+  sensor_outros_descricao     String?
+
+  //Central de monitoramento
+  plano_viagem            Boolean? @default(false)
+  tacografo               Boolean? @default(false)
+  paradas_nao_programadas Boolean? @default(false)
+  rastramento_analisado   Boolean? @default(false)
+  tacografo_analisado     Boolean? @default(false)
+  historico_rastreamento  Boolean? @default(false)
+  macros_transmitida      Boolean? @default(false)
+  sirene_ativada          Boolean? @default(false)
+  bloqueio_rastreador     Boolean? @default(false)
+  vandalismo_rastreador   Boolean? @default(false)
+
+  //Sobre a Última Posição do Rastreamento
+  ultima_posicao_rastreamento_data_hora String?
+  ultima_posicao_rastreamento_descricao String?
+
+  //Sobre os Discos de Tacógrafo
+  disco_tacografo_data_hora String?
+  disco_tacografo_descricao String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form9_Gerenciamento_Risco_Veiculo")
+}
+
+model Form10SistemasProtecaoCarregamento {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  //Proteção
+  protecao_escolta  Boolean? @default(false)
+  protecao_comboio  Boolean? @default(false)
+  protecao_velada   Boolean? @default(false)
+  protecao_outros   Boolean? @default(false)
+  protecao_veiculos String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form10_Sistemas_Protecao_Carregamento")
+}
+
+model Form11DeclaracaoMotoristaAjudante {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  arquivos_declaracoes Arquivo[] @relation("declaracao_motorista_ajudante")
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form11_Declaracao_Motorista_Ajudante")
+}
+
+model Form12GerenciamentoRiscoDeposito {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  //Depósito
+  deposito_sinistrado_segurado   Boolean? @default(false)
+  deposito_seguranca_eletronica  Boolean? @default(false)
+  deposito_seguranca_patrimonial Boolean? @default(false)
+  deposito_mercadoria_carregada  Boolean? @default(false)
+
+  //Dispositivos de Segurança no local de armazenamento
+  dispositivo_seguranca_cftv              Boolean? @default(false)
+  dispositivo_seguranca_botao_panico      Boolean? @default(false)
+  dispositivo_seguranca_alarme_sonoro     Boolean? @default(false)
+  dispositivo_seguranca_sensores_invasao  Boolean? @default(false)
+  dispositivo_seguranca_cerca_eletrica    Boolean? @default(false)
+  dispositivo_seguranca_sensores_presenca Boolean? @default(false)
+  dispositivo_seguranca_sirene            Boolean? @default(false)
+  dispositivo_seguranca_outros            Boolean? @default(false)
+
+  //Empresa de Segurança Patrimonial, quando aplicável.
+  empresa_seguranca_patrimonial_nome          String?
+  empresa_seguranca_patrimonial_cnpj          String?
+  empresa_seguranca_patrimonial_cep           String?
+  empresa_seguranca_patrimonial_endereco      String?
+  empresa_seguranca_patrimonial_numero        String?
+  empresa_seguranca_patrimonial_complemento   String?
+  empresa_seguranca_patrimonial_bairro        String?
+  empresa_seguranca_patrimonial_cidade        String?
+  empresa_seguranca_patrimonial_uf            String?
+  empresa_seguranca_patrimonial_telefone      String?
+  empresa_seguranca_patrimonial_celular       String?
+  empresa_seguranca_patrimonial_email         String?
+  empresa_seguranca_patrimonial_representante String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form12_Gerenciamento_Risco_Deposito")
+}
+
+model Form13LocaisEvento {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  //Descrição do Local da Abordagem
+  local_abordagem_rodovia          String?
+  local_abordagem_cep              String?
+  local_abordagem_endereco         String?
+  local_abordagem_numero           String?
+  local_abordagem_complemento      String?
+  local_abordagem_bairro           String?
+  local_abordagem_cidade           String?
+  local_abordagem_uf               String?
+  local_abordagem_ponto_referencia String?
+  local_abordagem_latitude         String?
+  local_abordagem_longitude        String?
+  local_abordagem_data_hora        String?
+  local_abordagem_cftv             Boolean? @default(false)
+  local_abordagem_testemunhas      Boolean? @default(false)
+
+  //Anexo Registros Fotográficos do Local da Abordagem
+  fotos_local_da_abordagem Arquivo[] @relation("fotos_local_da_abordagem")
+
+  //Descrição do Local de Cativeiro e Abandono do Motorista
+  local_cativeiro_rodovia          String?
+  local_cativeiro_cep              String?
+  local_cativeiro_endereco         String?
+  local_cativeiro_numero           String?
+  local_cativeiro_complemento      String?
+  local_cativeiro_bairro           String?
+  local_cativeiro_cidade           String?
+  local_cativeiro_uf               String?
+  local_cativeiro_ponto_referencia String?
+  local_cativeiro_latitude         String?
+  local_cativeiro_longitude        String?
+  local_cativeiro_data_hora        String?
+  local_cativeiro_cftv             Boolean? @default(false)
+  local_cativeiro_testemunhas      Boolean? @default(false)
+
+  //Anexo Registros Fotográficos do Local de Cativeiro e Abandono do Motorista
+  fotos_local_de_cativeiro_e_abandono_do_motorista Arquivo[] @relation("fotos_local_de_cativeiro_e_abandono_do_motorista")
+
+  //Descrição do Local de Encontro do Veículo
+  local_encontro_rodovia          String?
+  local_encontro_cep              String?
+  local_encontro_endereco         String?
+  local_encontro_numero           String?
+  local_encontro_complemento      String?
+  local_encontro_bairro           String?
+  local_encontro_cidade           String?
+  local_encontro_uf               String?
+  local_encontro_ponto_referencia String?
+  local_encontro_latitude         String?
+  local_encontro_longitude        String?
+  local_encontro_data_hora        String?
+  local_encontro_cftv             Boolean? @default(false)
+  local_encontro_testemunhas      Boolean? @default(false)
+
+  //Anexo Registros Fotográficos do Local de Encontro do Veículo
+  fotos_local_de_encontro_do_veiculo Arquivo[] @relation("fotos_local_de_encontro_do_veiculo")
+
+  //Descrição do Local de Recuperação da Carga
+  local_recuperacao_rodovia          String?
+  local_recuperacao_cep              String?
+  local_recuperacao_endereco         String?
+  local_recuperacao_numero           String?
+  local_recuperacao_complemento      String?
+  local_recuperacao_bairro           String?
+  local_recuperacao_cidade           String?
+  local_recuperacao_uf               String?
+  local_recuperacao_ponto_referencia String?
+  local_recuperacao_latitude         String?
+  local_recuperacao_longitude        String?
+  local_recuperacao_data_hora        String?
+  local_recuperacao_cftv             Boolean? @default(false)
+  local_recuperacao_testemunhas      Boolean? @default(false)
+
+  //Anexo Registros Fotográficos do Local de Recuperação da Carga
+  fotos_local_de_recuperacao_da_carga Arquivo[] @relation("fotos_local_de_recuperacao_da_carga")
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form13_Locais_Evento")
+}
+
+model Form14ResumoAveriguacoes {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  resumo_averiguacoes String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form14_Resumo_Averiguacoes")
+}
+
+model Form15RecuperacaoCarga {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  recuperacao_carga_recuperada   Boolean? @default(false)
+  recuperacao_carga_parcial      Boolean? @default(false)
+  fato_gerador_recuperacao_carga String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form15_Recuperacao_Carga")
+}
+
+model Form16AnexosFotograficos {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  anexos_fotograficos Arquivo[] @relation("anexos_fotograficos")
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form16_Anexos_Fotograficos")
+}
+
+model Form17Conclusao {
+  id              String            @id @default(uuid())
+  numero_processo String            @unique
+  status          Status_Formulario @default(Pendente)
+  data_cadastro   DateTime          @default(now())
+
+  conclusao_averiguacoes String?
+
+  formulario_associado     FormulariosDoRelatorio? @relation(fields: [formularioDoRelatorio_id], references: [id], onDelete: Cascade)
+  formularioDoRelatorio_id String?                 @unique
+
+  @@map("form17_Conclusao")
+}
+
+//**Model de Arquivo**
+
+model Arquivo {
+  id              String   @id @default(uuid())
+  numero_processo String
+  relatorio_id    String
+  data_cadastro   DateTime @default(now())
+
+  form_id                 String?
+  form_nome               String?
+  form_arquivo_campo_nome String?
+
+  arquivos_form11DeclaracaoMotoristaAjudante                Form11DeclaracaoMotoristaAjudante[] @relation("declaracao_motorista_ajudante")
+  arquivos_form13LocaisEvento_local_da_Abordagem            Form13LocaisEvento[]                @relation("fotos_local_da_abordagem")
+  arquivos_form13LocaisEvento_local_da_cativeiro            Form13LocaisEvento[]                @relation("fotos_local_de_cativeiro_e_abandono_do_motorista")
+  arquivos_form13LocaisEvento_local_de_Encontro             Form13LocaisEvento[]                @relation("fotos_local_de_encontro_do_veiculo")
+  arquivos_form13LocaisEvento_local_de_Recuperacao_da_Carga Form13LocaisEvento[]                @relation("fotos_local_de_recuperacao_da_carga")
+  arquivos_form16AnexosFotograficos                         Form16AnexosFotograficos[]          @relation("anexos_fotograficos")
+
+  arquivo_nome        String?
+  arquivo_tamanho     Int?
+  arquivo_chave       String
+  arquivo_localizacao String
+
+  @@map("arquivos")
+}
