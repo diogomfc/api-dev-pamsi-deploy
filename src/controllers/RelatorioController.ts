@@ -509,6 +509,7 @@ export class RelatorioController {
                 data: {
                     numero_processo: relatorio.numero_processo,
                     natureza_sinistro: relatorio.natureza_sinistro,
+                    status: relatorio.status,
                     cliente: relatorio.cliente,
                     cnpj: relatorio.cnpj,
                     usuario_responsavel_id: usuario_responsavel.id,
