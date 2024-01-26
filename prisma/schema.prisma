@@ -71,6 +71,7 @@ enum Status_Relatorio {
     Revisao
     Aprovado
     Emitido
+    Corrigir
     Recuperado
     Irreversivel
 }
