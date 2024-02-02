@@ -4,7 +4,7 @@
     "description": "API para o sistema de integração da Pamcary",
     "main": "build/server.js",
     "engines": {
-        "node": "20"
+        "node": "18.x"
     },
     "prisma": {
         "seed": "tsx prisma/seed.ts"
