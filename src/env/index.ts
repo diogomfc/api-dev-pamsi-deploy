@@ -14,7 +14,15 @@ const envSchema = z.object({
     AWS_DEFAULT_REGION: z.string(),
     S3_BASE_URL: z.string().url(),
     S3_BUCKET_NAME: z.string(),
-    //Database Vercel
+    //Vercel
+    POSTGRES_URL:z.string(),
+    POSTGRES_PRISMA_URL:z.string(),
+    POSTGRES_URL_NON_POOLING:z.string(),
+    POSTGRES_USER:z.string(),
+    POSTGRES_HOST:z.string(),
+    POSTGRES_PASSWORD:z.string(),
+    POSTGRES_DATABASE:z.string(),
+
 });
 
 export const _env = envSchema.safeParse(process.env);
