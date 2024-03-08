@@ -1,5 +1,5 @@
-import { logger } from "@/utils/Logger";
 import "dotenv/config";
+import { logger } from "@/utils/Logger";
 import { z } from "zod";
 
 const envSchema = z.object({
@@ -15,14 +15,13 @@ const envSchema = z.object({
     S3_BASE_URL: z.string().url(),
     S3_BUCKET_NAME: z.string(),
     //Vercel
-    POSTGRES_URL:z.string(),
-    POSTGRES_PRISMA_URL:z.string(),
-    POSTGRES_URL_NON_POOLING:z.string(),
-    POSTGRES_USER:z.string(),
-    POSTGRES_HOST:z.string(),
-    POSTGRES_PASSWORD:z.string(),
-    POSTGRES_DATABASE:z.string(),
-
+    POSTGRES_URL: z.string().url(),
+    POSTGRES_PRISMA_URL: z.string().url(),
+    POSTGRES_URL_NON_POOLING: z.string().url(),
+    POSTGRES_USER: z.string(),
+    POSTGRES_HOST: z.string().url(),
+    POSTGRES_PASSWORD: z.string(),
+    POSTGRES_DATABASE: z.string(),
 });
 
 export const _env = envSchema.safeParse(process.env);
