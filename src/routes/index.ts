@@ -1,19 +1,18 @@
-import { Router } from 'express';
-import { usuarioRouter } from './usuario.routes';
-import { loginRoutes } from './login.routes';
-import { relatorioRouter } from './relatorio.routes';
-import { formRoutes } from './form';
+import { Router } from "express";
+import { usuarioRouter } from "./usuario.routes";
+import { loginRoutes } from "./login.routes";
+import { relatorioRouter } from "./relatorio.routes";
+import { formRoutes } from "./form";
 
 export const routes = Router();
 
 // Rota de inicialização para teste
-routes.get('/', async (request, response) => {
-    return response.json({ message: 'Api iniciada com sucesso' });
+routes.get("/", async (request, response) => {
+    return response.json({ message: "Api iniciada com sucesso" });
 });
 
 // Rota de usuário
-routes.use('/usuarios', usuarioRouter);
-routes.use('/login', loginRoutes);
-routes.use('/relatorios', relatorioRouter);
-routes.use('/forms', formRoutes);
-
+routes.use("/usuarios", usuarioRouter);
+routes.use("/login", loginRoutes);
+routes.use("/relatorios", relatorioRouter);
+routes.use("/forms", formRoutes);
