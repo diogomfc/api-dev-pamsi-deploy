@@ -164,5 +164,5 @@ Aqui estão as próximas tarefas a serem concluídas:
 - [ ] Realizar testes de integração
 - [ ] Preparar a documentação para desenvolvedores
 
-## 📈 Progresso Geral
+## 📈 Progresso Geral - Prod Azure API
 Atualmente, 90% do projeto foi concluído.
