@@ -4,8 +4,8 @@ declare namespace Express {
             id: string;
             nome: string;
             email: string;
-            telefone?: string;
-            avatar?: string;
+            telefone: string;
+            avatar: string;
             funcao: "Admin" | "Analista" | "Supervisor" | "Revisor";
         };
         relatorio: {

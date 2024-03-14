@@ -87,7 +87,11 @@ export class UsuarioController {
             };
 
             // 6 - Salve o usuário na requisição para uso posterior
-            req.usuario = usuario;
+            req.usuario = {
+                ...usuario,
+                telefone: usuario.telefone || "",
+                avatar: usuario.avatar || "", 
+            };
 
             // 7 - Retorne a resposta
             res.status(201).json({
@@ -230,16 +234,16 @@ export class UsuarioController {
             } else {
 
                 // 2.1 - Verifique se o usuário tem permissão para listar todos os usuários
-                if (usuarioAutenticado.funcao !== 'Admin' && usuarioAutenticado.funcao !== 'Supervisor') {
+                // if (usuarioAutenticado.funcao !== 'Admin' && usuarioAutenticado.funcao !== 'Supervisor') {
 
-                    logger.error({
-                        message: `Ação não autorizada: O usuário ${usuarioAutenticado.nome} tentou listar todos os usuários sem a permissão adequada.`,
-                        method: req.method,
-                        url: req.originalUrl,
-                    });
+                //     logger.error({
+                //         message: `Ação não autorizada: O usuário ${usuarioAutenticado.nome} tentou listar todos os usuários sem a permissão adequada.`,
+                //         method: req.method,
+                //         url: req.originalUrl,
+                //     });
 
-                    return next(new AppError('Somente um Admin ou Supervisor podem listar todos os usuários.', 401));
-                }
+                //     return next(new AppError('Somente um Admin ou Supervisor podem listar todos os usuários.', 401));
+                // }
                 // 2.2 - buscar todos os usuários
                 const usuarios = await prisma.usuario.findMany({
                     select: {
